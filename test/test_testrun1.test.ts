@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Testing, MoreComplexClass } from "../src/index";
+import { Testing, MoreComplexClass } from "../src/example/samplecode";
 Testing.resetState();
 
 test("Testing.method2", async () => {

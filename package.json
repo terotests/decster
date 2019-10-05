@@ -1,12 +1,12 @@
 {
-  "name": "decortest",
+  "name": "decster",
   "version": "1.0.0",
-  "description": "decortest",
+  "description": "decster",
   "main": "index.js",
   "scripts": {
     "compile": "tsc",
-    "start": "npm run compile && node dist/src/index.js",
-    "test": "npm run compile && jest --runInBand"
+    "start": "npm run compile && node dist/src/example/run.js",
+    "test": "jest --runInBand"
   },
   "keywords": [],
   "author": "Tero Tolonen",
