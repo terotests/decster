@@ -8,6 +8,9 @@ node_modules/
 # dist folder
 dist/
 
+# do not add jest coverage
+coverage/
+
 # folder files
 data_folder/
 
