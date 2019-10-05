@@ -2,6 +2,9 @@
 # Dependency directories
 node_modules/
 
+# This folder is not needed actually
+.robowr
+
 # dist folder
 dist/
 
