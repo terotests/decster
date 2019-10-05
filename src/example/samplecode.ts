@@ -1,4 +1,4 @@
-import { testParams } from "..";
+import { TEST } from "..";
 import { testCaseSetup } from "./setup";
 
 export class MoreComplexClass {
@@ -11,6 +11,7 @@ export class MoreComplexClass {
   }
 }
 
+// testing a side effect
 let globalState = 1;
 
 export class Testing {
@@ -22,32 +23,47 @@ export class Testing {
     globalState = 1;
   }
 
-  @testParams()
+  @TEST(testCaseSetup)
   helloWorld(cnt: number, text: string) {
     return `${text} : ${cnt}`;
   }
 
+  @TEST(testCaseSetup)
+  async timeout(ms: number, text: string) {
+    await new Promise(resolve => setTimeout(resolve, ms));
+    return [1, 2, 3, 4, text];
+  }
+
   // runtime type checking for certain classes could be done here
-  @testParams(testCaseSetup)
+  @TEST(testCaseSetup)
   method2(cnt: MoreComplexClass, text: string) {
     return `${text} : ${cnt.getCnt()}`;
   }
 
-  @testParams(testCaseSetup)
+  @TEST(testCaseSetup)
   method3(cnt: MoreComplexClass, text: string) {
     return { count: cnt.a, text };
   }
 
-  @testParams(testCaseSetup)
+  @TEST(testCaseSetup)
+  mapItems(list: Array<{ name: string }>) {
+    return list.map(item => {
+      return {
+        ucName: item.name.toLocaleUpperCase(),
+        lcName: item.name.toLocaleLowerCase()
+      };
+    });
+  }
+
+  @TEST(testCaseSetup)
   incState() {
     return ++globalState;
   }
 
-  @testParams({
+  @TEST({
     ...testCaseSetup,
     after: args => {
       args.wr.newline();
-      args.wr.out(`console.log('Dec called');`, true);
     }
   })
   decState() {

@@ -2,8 +2,6 @@
 
 import * as R from "robowr";
 
-let fs = new R.CodeFileSystem();
-
 export interface MethodInfo {
   runner: TestCaseRunner;
   className: string;
@@ -15,29 +13,36 @@ export interface MethodInfo {
 }
 
 export class TestCaseRunner {
+  fs = new R.CodeFileSystem();
   isRunning = false;
   callParams: { [key: string]: R.CodeWriter } = {};
   testName = "";
   callCnt = 0;
 
-  start(testName: string) {
-    fs = new R.CodeFileSystem();
+  async describe(name: string, runner: (fs: R.CodeFileSystem) => any) {
+    this.fs = new R.CodeFileSystem();
+    this.start(name);
+    await runner(this.fs);
+    this.end();
+    return this.fs;
+  }
+
+  private start(testName: string) {
     this.isRunning = true;
     this.testName = testName;
     this.callCnt = 0;
   }
-  end(testName: string) {
+  private end() {
     this.isRunning = true;
-    this.testName = testName;
-  }
-  saveTo(path: string) {
-    fs.saveTo(path, { usePrettier: true });
   }
 }
 
 export const testSuite = new TestCaseRunner();
 
 export interface serializerArguments {
+  enabled?: boolean;
+  dirName?: string;
+  fileName?: string;
   firstCall?: (info: MethodInfo) => R.CodeWriter;
   wrapMethod?: (info: MethodInfo) => R.CodeWriter;
   arguments?: (info: MethodInfo) => void;
@@ -45,11 +50,13 @@ export interface serializerArguments {
   after?: (info: MethodInfo) => void;
 }
 
-export function testParams(opts?: serializerArguments) {
+export function TEST(opts?: serializerArguments) {
   const options: serializerArguments = {
     arguments:
       opts && opts.arguments ? opts.arguments : (info: MethodInfo) => {},
-    value: opts && opts.value ? opts.value : (info: MethodInfo) => {}
+    value: opts && opts.value ? opts.value : (info: MethodInfo) => {},
+    fileName: opts && opts.fileName ? opts.fileName : null,
+    dirName: opts && opts.dirName ? opts.dirName : null
   };
   return function(
     target: Object,
@@ -65,7 +72,12 @@ export function testParams(opts?: serializerArguments) {
         return method.apply(this, args);
       }
       const data: MethodInfo = {
-        wr: fs.getFile("/", `test_${testSuite.testName}.test.ts`).getWriter(),
+        wr: testSuite.fs
+          .getFile(
+            options.dirName || "/",
+            options.fileName || `test_${testSuite.testName}.test.ts`
+          )
+          .getWriter(),
         self: this,
         args,
         className,
@@ -81,13 +93,25 @@ export function testParams(opts?: serializerArguments) {
         data.wr = opts.wrapMethod(data);
       }
       options.arguments(data);
-      data.result = method.apply(this, args);
-      options.value(data);
-      if (opts.after) {
-        opts.after(data);
+      const d = method.apply(this, args);
+
+      if (d && d.then) {
+        d.then(resolvedData => {
+          data.result = resolvedData;
+          options.value(data);
+          if (opts.after) {
+            opts.after(data);
+          }
+        });
+      } else {
+        data.result = d;
+        options.value(data);
+        if (opts.after) {
+          opts.after(data);
+        }
       }
       testSuite.callCnt++;
-      return data.result;
+      return d;
     };
     return propertyDesciptor;
   };

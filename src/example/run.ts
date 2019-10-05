@@ -1,27 +1,43 @@
 import { testSuite } from "../";
 import { Testing } from "./samplecode";
-import { MoreComplexClass } from "./samplecode";
-import * as fs from "fs";
+import * as R from "robowr";
 
-testSuite.start("testrun1");
-new Testing().method2(new MoreComplexClass(1234), "Something else here then");
-new Testing().method2(
-  new MoreComplexClass(1234),
-  "Something else here then, 2"
-);
-new Testing().method3(
-  new MoreComplexClass(1234),
-  "Something else here then, 2"
-);
+const wrapToDescribeAndSave = (desc: string, fs: R.CodeFileSystem) => {
+  fs.files.forEach(f => {
+    const wr = f.getWriter();
+    const start = f.getWriter().tag("start");
+    start.out(`describe("${desc}", () => {`, true);
+    start.indent(1);
+    start.out("", true);
+    wr.indent(-1);
+    wr.out(`});`, true);
+  });
+  fs.saveTo("./test", { usePrettier: true });
+};
 
-new Testing().incState();
-new Testing().incState();
-new Testing().decState();
-new Testing().decState();
-new Testing().incState();
+async function run() {
+  await testSuite.describe("tests", fs => {
+    const t = new Testing();
+    t.helloWorld(123, "OK");
+    t.incState();
+    t.incState();
+    t.decState();
+    t.decState();
+    t.incState();
+    t.mapItems([{ name: "john smith" }, { name: "arnold" }, { name: "joan" }]);
+    wrapToDescribeAndSave("Syncronous test case", fs);
+  });
 
-testSuite.saveTo("./test");
+  await testSuite.describe("tests2", async fs => {
+    const t = new Testing();
+    await t.timeout(3333, "<timeout>");
+    wrapToDescribeAndSave("Async test case", fs);
+  });
 
-// to use:
-// npm install reflect-metadata --save
-// npm install class-transformer --save
+  await testSuite.describe("tests3", async fs => {
+    const t = new Testing();
+    await t.timeout(1234, "second test");
+    wrapToDescribeAndSave("Async test case 2", fs);
+  });
+}
+run();
