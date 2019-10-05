@@ -1,0 +1,24 @@
+{
+  "name": "decortest",
+  "version": "1.0.0",
+  "description": "decortest",
+  "main": "index.js",
+  "scripts": {
+    "compile": "tsc",
+    "start": "npm run compile && node dist/src/index.js",
+    "test": "npm run compile && ./node_modules/.bin/mocha dist/test/ --recursive --reporter spec"
+  },
+  "keywords": [],
+  "author": "Tero Tolonen",
+  "license": "MIT",
+  "dependencies": {
+    "robowr": "^1.0.11"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "mocha": "^5.2.0",
+    "@types/chai": "^4.1.4",
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^10.5.6"
+  }
+}

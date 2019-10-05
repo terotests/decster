@@ -1,0 +1,21 @@
+
+# Dependency directories
+node_modules/
+
+# dist folder
+dist/
+
+# folder files
+data_folder/
+
+# Image files
+*.jpg
+*.png
+
+# MacOS
+.DS_Store
+.idea/
+
+# TypeScript compiled .map files
+*.map  
+  
