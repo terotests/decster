@@ -69,6 +69,7 @@ To make it automatically testable we have to
 ```typescript
 import { TEST } from "decster";
 
+// IMPORTANT: serializers must be defined before the class, otherwise the decorator can not use them
 export const serializers = {
   // must be defined for each non trivially serializable entity, including the class used in test
   Hello: {
