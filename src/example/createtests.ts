@@ -27,8 +27,8 @@ async function run() {
     obj.recursive("This could fail!!!");
   });
   await DecoratorTestSuite.describe("example", async fs => {
-    const obj = new Hello("Moro");
-    obj.hello("User");
+    new Hello("Hello").hello("User");
+    new Hello("What's up").hello("User");
   });
 }
 run();
