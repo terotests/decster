@@ -39,7 +39,7 @@ npm install --save decster
 
 The tool can create test cases automatically if
 
-1. classed are decorated with `@TEST(__filename)`
+1. classed are decorated with `@TEST(__filename)`
 2. serializers are defined for all classes, including classes used as parameters or return values
 
 So, we have a simple class like and we want to test the `hello` function.
