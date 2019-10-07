@@ -2,10 +2,10 @@
   "name": "decster",
   "version": "1.0.0",
   "description": "decster",
-  "main": "index.js",
+  "main": "dist/index/index.js",
   "scripts": {
     "compile": "tsc",
-    "start": "npm run compile && node dist/src/example/run.js && npm run compile",
+    "start": "npm run compile && node dist/src/example/createtests.js && npm run compile",
     "test": "npm run start && jest --runInBand"
   },
   "keywords": [],
@@ -19,7 +19,12 @@
     "@types/node": "^10.5.6",
     "chai": "^4.1.2",
     "jest": "^24.9.0",
-    "mocha": "^5.2.0"
+    "mocha": "^5.2.0",
+    "typescript": "^3.6.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/terotests/decster.git"
   },
   "jest": {
     "verbose": true,
