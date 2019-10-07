@@ -1,6 +1,6 @@
 {
   "name": "decster",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "decster",
   "main": "dist/src/index.js",
   "scripts": {
