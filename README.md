@@ -1,4 +1,4 @@
-# Decster, Regression testing tool for TypeScript or JavaScript
+# Decster, Regression test Generator tool for Jest
 
 Automates the test case parameter and return value validation by creating test cases
 for Jest testing tool from the results for the functions which are run using decorators
