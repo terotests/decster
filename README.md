@@ -7,17 +7,13 @@ defined in Decster.
 ## Why?
 
 When you know your code works, it would be nice to record test cases at that point in case
-you later break the code. This is called regression and it can be avoided using well designed
-test cases.
-
-While this tool does not help you to design good test cases, it may help you to setup the
-test cases to avoid regression later on. It will collect the parameters and return values
-from you tests and write the actual tests which can be run.
+you later break the code, to avoid regression.
 
 ## Ok, so what was difficult in this?
 
-So why you don't just use simple logger decorator and `JSON.stringify` the result? It works, right?
-Well yeah, it can work but can not save classes or more complex values.
+I don't know, I just could not find a good tool for this and created one.
+
+I guess you could just use simple logger decorator and `JSON.stringify` the result but then you can not save classes or more complex values.
 
 Also you have to be careful if the returned value is a Promise or something that can not be trivially serialized to JSON. Furthermore, you should only serialize if test cases are running and also be careful that recursively calling recorded functions does not affect re results negatively.
 
