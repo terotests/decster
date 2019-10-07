@@ -58,7 +58,7 @@ export class Hello {
 
 To make it automatically testable we have to
 
-1. Import `TEST` decorator
+1. Import `TEST` decorator
 2. Implement serializers for all non trivial classes
 3. Add decorators for functions to be testeds
 
