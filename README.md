@@ -89,7 +89,7 @@ export class Hello {
 }
 ```
 
-Then to create the actual test you have to run the instance of `Hello` in test case generator function.
+Then to create the actual test you have to run the instance of `Hello` in test case generator function.
 
 ```typescript
 import { DecoratorTestSuite } from "..";
@@ -102,7 +102,7 @@ await DecoratorTestSuite.describe("example", async fs => {
 });
 ```
 
-This will generate automatically corresponding test case in `test/` folder
+This will generate automatically corresponding test case in `test/` folder
 
 ```typescript
 import { expect } from "chai";
