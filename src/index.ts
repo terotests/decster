@@ -88,7 +88,7 @@ export function TEST(__file: string, opts?: serializerArguments) {
     const mod = require(modPath);
 
     if (!mod.serializers) {
-      throw `Modules which are to be tested must have serializers, problems with class ${propertyName} : ${__file}`;
+      throw `Modules which are to be tested must have serializers, problems with ${__file}`;
     }
 
     const serialize = arg => {

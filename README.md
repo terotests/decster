@@ -37,6 +37,10 @@ Yes. Do not use in production unless you are prepared to fix some bugs.
 
 ## How to use it
 
+```
+npm install --save decster
+```
+
 The tool can create test cases automatically if
 
 1. classed are decorated with `@TEST(__filename)`
