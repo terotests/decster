@@ -13,6 +13,16 @@ export interface MethodInfo {
   result?: any;
 }
 
+export interface TestCaseOptions {
+  name: string;
+  description?: string;
+  emitPath?: string;
+  targetDir?: string;
+  targetFile?: string;
+  describeBlock?: () => [string, string];
+  testBlock?: (info: MethodInfo) => [string, string];
+}
+
 export class TestCaseRunner {
   fs = new R.CodeFileSystem();
   isRunning = false;
@@ -20,30 +30,73 @@ export class TestCaseRunner {
   callParams: { [key: string]: R.CodeWriter } = {};
   testName = "";
   callCnt = 0;
-  path = "./test";
+  emitPath = "dist";
+  path = "test";
+  filename = "";
+  serializerCnt = 0;
+  wr?: R.CodeWriter;
+  options: TestCaseOptions;
+  importedSerializers: { [key: string]: string } = {};
 
-  async describe(name: string, runner: (runner: TestCaseRunner) => any) {
+  uuCnt = 1;
+  uniqueNames: { [key: string]: string } = {};
+
+  getUniqueName(moduleName: string) {
+    const trySimple = path.basename(moduleName);
+    if (!this.uniqueNames[trySimple]) {
+      this.uniqueNames[trySimple] = trySimple;
+      return trySimple;
+    }
+    return this.getUniqueName(`module${this.uuCnt++}`);
+  }
+
+  async describe(
+    opts: TestCaseOptions | string,
+    runner: (runner: TestCaseRunner) => any
+  ) {
+    if (typeof opts === "string") {
+      this.options = {
+        name: opts
+      };
+    } else {
+      this.options = opts;
+    }
+    const options = this.options;
+
+    this.path = options.targetDir || this.path;
+    this.filename = options.targetFile || `${options.name}.test.ts`;
+    this.emitPath = options.emitPath || this.emitPath;
+    const name = options.name;
     this.fs = new R.CodeFileSystem();
     this.start(name);
+
+    // create a new test file writer for this test case, if it does not exist already
+    this.wr = this.fs.getFile("/", this.filename).getWriter();
+    if (this.wr.getCode().length === 0) {
+      this.wr.out(`import { expect } from 'chai'`, true);
+      // wr.out(`import { serializers } from '${relPath}'`, true);
+      this.wr.tag("serializers"); // import serializers here
+    }
+    const wr = this.wr;
+    const [describeBlockStart, describeBlockEnd] = options.describeBlock
+      ? options.describeBlock()
+      : [`describe("${options.description || name}", () => {`, `});`];
+    wr.out(describeBlockStart, true);
+    wr.indent(1);
     await runner(this);
+    wr.indent(-1);
+    wr.out(describeBlockEnd, true);
     this.end();
-    this.fs.files.forEach(f => {
-      const wr = f.getWriter();
-      const start = f.getWriter().tag("start");
-      start.out(`describe("${name}", () => {`, true);
-      start.indent(1);
-      start.out("", true);
-      wr.indent(-1);
-      wr.out(`});`, true);
-    });
     this.fs.saveTo(this.path, { usePrettier: true });
     return this.fs;
   }
 
   private start(testName: string) {
+    this.importedSerializers = {};
     this.isRunning = true;
     this.testName = testName;
     this.callCnt = 0;
+    this.uniqueNames = {};
   }
 
   private end() {
@@ -65,12 +118,22 @@ const isJSONSerializable = (name: string) => {
 };
 
 export interface serializerArguments {
-  enabled?: boolean;
+  disabled?: boolean;
   dirName?: string;
   fileName?: string;
 }
 
 export function TEST(__file: string, opts?: serializerArguments) {
+  // if disabled, preserve original function
+  if (opts && opts.disabled) {
+    return function(
+      target: Object,
+      propertyName: string,
+      propertyDesciptor: PropertyDescriptor
+    ): PropertyDescriptor {
+      return propertyDesciptor;
+    };
+  }
   const options: serializerArguments = {
     fileName: opts && opts.fileName ? opts.fileName : null,
     dirName: opts && opts.dirName ? opts.dirName : null
@@ -91,7 +154,7 @@ export function TEST(__file: string, opts?: serializerArguments) {
       throw `Modules which are to be tested must have serializers, problems with ${__file}`;
     }
 
-    const serialize = arg => {
+    const serialize = (arg, serializerName: string) => {
       if (
         arg &&
         arg.constructor &&
@@ -104,7 +167,7 @@ export function TEST(__file: string, opts?: serializerArguments) {
         const serialized = JSON.stringify(
           mod.serializers[arg.constructor.name].pack(arg)
         );
-        return `serializers.${className}.unpack(${serialized})`;
+        return `${serializerName}.${className}.unpack(${serialized})`;
       } else {
         return JSON.stringify(arg, null, 2);
       }
@@ -118,46 +181,61 @@ export function TEST(__file: string, opts?: serializerArguments) {
       }
 
       const data: MethodInfo = {
-        wr: DecoratorTestSuite.fs
-          .getFile(
-            options.dirName || "/",
-            options.fileName || `${DecoratorTestSuite.testName}.test.ts`
-          )
-          .getWriter(),
+        wr: DecoratorTestSuite.wr,
         self: this,
         args,
         className,
         methodName,
         runner: DecoratorTestSuite
       };
-      if (DecoratorTestSuite.callCnt === 0) {
-        const relPath = path.relative("./dist/test", modPath);
-        const wr = data.wr;
-        wr.out(`import { expect } from 'chai'`, true);
-        wr.out(
-          `import { serializers } from '${relPath}'  
-          `,
+
+      // original:
+      const relPath = path.relative(
+        `./${DecoratorTestSuite.emitPath}/${DecoratorTestSuite.path}`,
+        modPath
+      );
+      // const relPath = path.relative(__dirname, modPath);
+
+      if (!DecoratorTestSuite.importedSerializers[relPath]) {
+        const tag = data.wr.tag("serializers");
+
+        DecoratorTestSuite.serializerCnt++;
+        DecoratorTestSuite.importedSerializers[
+          relPath
+        ] = DecoratorTestSuite.getUniqueName(modPath);
+        tag.out(
+          `import * as ${
+            DecoratorTestSuite.importedSerializers[relPath]
+          } from '${relPath}'`,
           true
         );
-        wr.tag("start"); // if you need to insert code later
       }
+      const serializerName = `${
+        DecoratorTestSuite.importedSerializers[relPath]
+      }.serializers`;
+
+      const [testBlockStart, testBlockEnd] = DecoratorTestSuite.options
+        .testBlock
+        ? DecoratorTestSuite.options.testBlock(data)
+        : [`test( "${className}.${methodName}", async () => {`, `});`];
+
       const wr = data.wr;
       if (!mod.serializers[className]) {
         throw `class ${className} should have a serializer`;
       }
-      wr.out(`test( "${className}.${methodName}", async () => {`, true);
+      wr.out(testBlockStart, true);
       wr.indent(1);
 
       const serialized = JSON.stringify(mod.serializers[className].pack(this));
       wr.out(
-        `expect( await ((serializers.${className}.unpack(${serialized})).${methodName}(`
+        `expect( await ((${serializerName}.${className}.unpack(${serialized})).${methodName}(`
       );
 
       data.args.forEach((arg, index) => {
         if (index > 0) {
           wr.out(", ");
         }
-        wr.out(serialize(arg));
+        wr.out(serialize(arg, serializerName));
       });
       wr.out(")))");
 
@@ -176,13 +254,13 @@ export function TEST(__file: string, opts?: serializerArguments) {
       if (d && d.then) {
         d.then(resolvedData => {
           data.result = resolvedData;
-          wr.out(`.to.deep.equal(${serialize(resolvedData)})`);
-          wr.out(`})`, true);
+          wr.out(`.to.deep.equal(${serialize(resolvedData, serializerName)})`);
+          wr.out(testBlockEnd, true);
         });
       } else {
         data.result = d;
-        wr.out(`.to.deep.equal(${serialize(d)})`);
-        wr.out(`})`, true);
+        wr.out(`.to.deep.equal(${serialize(d, serializerName)})`);
+        wr.out(testBlockEnd, true);
       }
 
       DecoratorTestSuite.callCnt++;

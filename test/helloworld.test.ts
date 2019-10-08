@@ -1,10 +1,9 @@
 import { expect } from "chai";
-import { serializers } from "../src/example/simple";
-
+import * as simple from "../src/example/simple";
 describe("helloworld", () => {
   test("HelloWorld.setMessage", async () => {
     expect(
-      await serializers.HelloWorld.unpack({
+      await simple.serializers.HelloWorld.unpack({
         user: { id: 1000 },
         msg: "Hello World"
       }).setMessage("Hello Earth")
@@ -12,7 +11,7 @@ describe("helloworld", () => {
   });
   test("HelloWorld.getMessage", async () => {
     expect(
-      await serializers.HelloWorld.unpack({
+      await simple.serializers.HelloWorld.unpack({
         user: { id: 1000 },
         msg: "Hello Earth"
       }).getMessage()
@@ -20,7 +19,7 @@ describe("helloworld", () => {
   });
   test("HelloWorld.getUser", async () => {
     expect(
-      await serializers.HelloWorld.unpack({
+      await simple.serializers.HelloWorld.unpack({
         user: { id: 1000 },
         msg: "Hello Earth"
       }).getUser()
@@ -30,7 +29,7 @@ describe("helloworld", () => {
   });
   test("HelloWorld.setUserId", async () => {
     expect(
-      await serializers.HelloWorld.unpack({
+      await simple.serializers.HelloWorld.unpack({
         user: { id: 1000 },
         msg: "Hello Earth"
       }).setUserId(0)
@@ -38,7 +37,7 @@ describe("helloworld", () => {
   });
   test("HelloWorld.getUser", async () => {
     expect(
-      await serializers.HelloWorld.unpack({
+      await simple.serializers.HelloWorld.unpack({
         user: { id: 0 },
         msg: "Hello Earth"
       }).getUser()
@@ -48,7 +47,7 @@ describe("helloworld", () => {
   });
   test("HelloWorld.recursive", async () => {
     expect(
-      await serializers.HelloWorld.unpack({
+      await simple.serializers.HelloWorld.unpack({
         user: { id: 0 },
         msg: "Hello Earth"
       }).recursive("This could fail!!!")
